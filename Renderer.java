@@ -109,6 +109,7 @@ public class Renderer {
                 });
 
                 // Calculate rotation Transforms
+                // TODO : Refactor these transforms into an object maybe?
                 double pitch = Math.toRadians(mouse.y);
                 Matrix4 z_r_transform = new Matrix4(new double[][]{
                         {Math.cos(pitch), Math.sin(pitch), 0, 0},
@@ -206,6 +207,9 @@ public class Renderer {
 
         // Rotate mode needs 60~ fps
 
+
+        // TODO : Redo all options for starting the program, make things like RENDER_GIF and Rotate mode seperate from FPS stuff
+        // TODO : Add dynamic sleep times so the TARGET_FPS can actually be hit
         long sleep_time = (long)Math.floor(1000.0 / TARGET_FPS);
         if (FPS_TEST)
             sleep_time = 0;
