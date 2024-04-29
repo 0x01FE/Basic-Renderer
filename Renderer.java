@@ -13,6 +13,7 @@ public class Renderer {
     static final int HEIGHT = 1080;
     static final int WIDTH = 1920;
     static final int FOV = 90;
+    static final double LOOK_SPEED = 0.01;
     static final boolean SHOW_AXIS_LINES = false;
     static final Color BACKGROUND_COLOR = Color.BLACK;
     static final boolean ROTATE_MODE = true;
@@ -38,17 +39,15 @@ public class Renderer {
 
     public static void main(String[] args)
     {
-
-
-        final double DRAG_SPEED = 50;
         final double ASPECT_RATIO = (double) HEIGHT / WIDTH;
         final double FOV_RAD = 1.0 / (Math.tan(Math.toRadians(FOV / 2.0)));
         final double Z_NEAR = 0.1;
         final double Z_FAR = 1000;
         final double Q = Z_FAR/(Z_FAR - Z_NEAR);
 
-        Point mouse = new Point(0, 0);
-        ArrayList<Object3D> world_objects = new ArrayList<Object3D>();
+        Point world_rotation = new Point(0, 0);
+        Point camera_rotation = new Point(0, 0);
+        ArrayList<Object3D> world_objects = new ArrayList<>();
         Camera camera = new Camera();
         camera.position = new Vertex(0, 0, 0);
         Vertex light_direction = new Vertex(0, 0, -1);
@@ -82,9 +81,9 @@ public class Renderer {
         }
 
 
+        // Load objects for the world
         Object3D c = new Object3D();
         c.loadFromOBJ("objs/sphere.obj");
-//        c.randomRGB();
 
         world_objects.add(c);
 
@@ -111,29 +110,22 @@ public class Renderer {
                 });
 
                 // Calculate rotation Transforms
-                // TODO : Refactor these transforms into an object maybe?
-                double pitch = Math.toRadians(mouse.y);
-                Matrix4 z_r_transform = new Matrix4(new double[][]{
-                        {Math.cos(pitch), Math.sin(pitch), 0, 0},
-                        {-Math.sin(pitch), Math.cos(pitch), 0 , 0},
-                        {0, 0, 1, 0},
-                        {0, 0, 0, 1}
-                });
+                double theta = Math.toRadians(world_rotation.y);
+                Matrix4 z_rotation = Matrix4.makeZRotation(theta);
 
-                double roll = Math.toRadians(mouse.x);
-                Matrix4 x_r_transform = new Matrix4(new double[][]{
-                        {1, 0, 0, 0},
-                        {0, Math.cos(roll), Math.sin(roll), 0},
-                        {0, -Math.sin(roll), Math.cos(roll), 0},
-                        {0, 0, 0, 1}
-                });
+                theta = Math.toRadians(world_rotation.x);
+                Matrix4 x_rotation = Matrix4.makeXRotation(theta);
 
                 Matrix4 world_matrix;
-                world_matrix = z_r_transform.multiplyMatrix(x_r_transform);
-//                world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 0));
+                world_matrix = z_rotation.multiplyMatrix(x_rotation);
+                world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 0));
 
-                camera.direction = new Vertex(0, 0, 1);
                 Vertex up = new Vertex(0, 1, 0);
+
+                double camera_rotation_y_radians = Math.toRadians(camera_rotation.y);
+                camera.direction = new Vertex(0, 0, 1);
+                Matrix4 y_camera_rotation = Matrix4.makeYRotation(camera_rotation_y_radians);
+                camera.direction = y_camera_rotation.multiplyPoint(camera.direction);
                 camera.make_matrix(up);
 
                 // Render Stored 3D Objects
@@ -147,21 +139,23 @@ public class Renderer {
         // add Mouse Listener for rotating
         renderingPanel.addMouseMotionListener(new MouseMotionListener() {
             @Override
-            public void mouseDragged(MouseEvent e) {
-                if (!ROTATE_MODE) {
-                    double yi = DRAG_SPEED / renderingPanel.getHeight();
-                    double xi = DRAG_SPEED / renderingPanel.getWidth();
-
-                    mouse.x = e.getX() * xi;
-                    mouse.y = e.getY() * yi;
-
-                    renderingPanel.repaint();
-                }
-            }
+            public void mouseDragged(MouseEvent e) {}
 
             @Override
-            public void mouseMoved(MouseEvent e) {
+            public void mouseMoved(MouseEvent e)
+            {
+                int mouse_x = e.getX() - (renderingPanel.getWidth() / 2);
+                int mouse_y = e.getY() - (renderingPanel.getHeight() / 2);
 
+//                System.out.println("Mouse X: " + mouse_x + ", Mouse Y: " + mouse_y);
+
+                camera_rotation.y = (mouse_x / (renderingPanel.getWidth() / 2.0)) * -1 * 90;
+
+                if (camera.mouse_lock)
+                {
+                    // Code to move mouse to 0,0
+                    int i;
+                }
             }
         });
 
@@ -172,6 +166,7 @@ public class Renderer {
             @Override
             public void keyPressed(KeyEvent e)
             {
+                // TODO : Make shift increase camera move speed (maybe just for Z axis?)
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_W -> camera.go_forward = true;
                     case KeyEvent.VK_S -> camera.go_backwards = true;
@@ -179,6 +174,7 @@ public class Renderer {
                     case KeyEvent.VK_A -> camera.go_left = true;
                     case KeyEvent.VK_SPACE -> camera.go_up = true;
                     case KeyEvent.VK_CONTROL -> camera.go_down = true;
+                    case KeyEvent.VK_ESCAPE -> camera.mouse_lock = !camera.mouse_lock;
                 }
             }
 
@@ -216,13 +212,13 @@ public class Renderer {
         long currentTime;
 
         long frameStartTime = System.currentTimeMillis();
-        long frameEndTime = 0;
-        double frameDeltaTime = 0;
+        long frameEndTime;
+        double frameDeltaTime;
         double FPS = 0;
 
         long moveStartTime = System.currentTimeMillis();
-        long moveEndTime = 0;
-        double moveDeltaTime = 0;
+        long moveEndTime;
+        double moveDeltaTime;
 
         Giffer giffer;
         try {
@@ -231,7 +227,6 @@ public class Renderer {
             e.printStackTrace();
             return;
         }
-        long frameRenderStart;
         int frames_captured = 0;
 
         while (true)
@@ -248,14 +243,13 @@ public class Renderer {
             // If rotate mode, rotate
             if (ROTATE_MODE)
             {
-                mouse.x = (currentTime / 100.0) * 4;
-                mouse.y = (currentTime / 100.00) * 4;
+                world_rotation.x = (currentTime / 100.0) * 4;
+                world_rotation.y = (currentTime / 100.00) * 4;
             }
 
             // Capture frame to render GIF
             if (RENDER_GIF)
             {
-                frameRenderStart = System.currentTimeMillis();
                 BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
                 Graphics2D g = bi.createGraphics();
                 renderingPanel.print(g);
@@ -286,14 +280,6 @@ public class Renderer {
                     System.out.println("---------------------------------Finished drawing gif!");
                     System.exit(1);
                 }
-
-                try {
-                    currentTime = System.currentTimeMillis();
-                    Thread.sleep(Math.max(0, sleep_time - (currentTime - frameRenderStart)));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.exit(1);
-                }
             }
 
             // Calculate FPS
@@ -304,7 +290,7 @@ public class Renderer {
                 FPS = frames / (frameDeltaTime/1000);
                 System.out.println("FPS: " + FPS);
                 if (RENDER_GIF)
-                    System.out.println("Captured frames: " + Integer.toString(frames_captured));
+                    System.out.println("Captured frames: " + frames_captured);
 
                 frames = 0;
                 frameStartTime = System.currentTimeMillis();
@@ -320,7 +306,7 @@ public class Renderer {
             }
 
             // Calculate sleep time to ensure program is meeting target FPS
-            if (FPS != 0) {
+            if (FPS != 0 && !FPS_TEST) {
                 if (FPS < TARGET_FPS * 0.8 && FPS > TARGET_FPS * 0.4) {
                     sleep_time = (long) ((sleep_time * TARGET_FPS) / FPS);
                 } else if (FPS < TARGET_FPS * 0.4) {

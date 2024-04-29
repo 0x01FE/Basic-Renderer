@@ -3,13 +3,16 @@ public class Camera {
     Vertex position;
     Vertex direction;
     Matrix4 matrix;
-    boolean go_forward, go_backwards, go_right, go_left, go_up, go_down;
+    boolean go_forward, go_backwards, go_right, go_left, go_up, go_down, mouse_lock;
     double move_speed;
 
     Camera()
     {
+        // Start at origin
         this.position = new Vertex();
-        this.direction = new Vertex();
+
+        // We start looking forwards
+        this.direction = new Vertex(0, 0, 1);
 
         this.go_forward = false;
         this.go_backwards = false;
@@ -17,6 +20,8 @@ public class Camera {
         this.go_left = false;
         this.go_up = false;
         this.go_down = false;
+
+        this.mouse_lock = true;
 
         this.move_speed = 0.1;
     }

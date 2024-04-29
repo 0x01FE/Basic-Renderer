@@ -39,15 +39,6 @@ public class Object3D
             Vertex[] view_points = new Vertex[3];
             Vertex[] projected_points = new Vertex[3];
 
-//             Rotate Points
-//            for (int i = 0; i < t.points.length; i++)
-//            {
-//                transformed_points[i] = z_r_transform.multiplyPoint(x_r_transform.multiplyPoint(t.points[i]));
-//
-//                // Screen Offset
-//                transformed_points[i].z += 4;
-//            }
-
             for (int i = 0; i < 3; i ++) {
                 transformed_points[i] = world_matrix.multiplyPoint(t.points[i]);
                 transformed_points[i].z += 4;
@@ -83,24 +74,31 @@ public class Object3D
                 projected_point.x *= 0.5 * Renderer.WIDTH;
                 projected_point.y *= 0.5 * Renderer.HEIGHT;
 
-                // Draw Lines for Triangles
-                if (i == 0)
-                {
-                    path.moveTo(projected_point.x, projected_point.y);
-                } else {
-                    path.lineTo(projected_point.x, projected_point.y);
-                }
 
                 // Store for projected points for rasterisation
                 projected_points[i] = projected_point;
             }
 
             // Draw Triangle Lines
-            path.closePath();
             if (Renderer.DRAW_WIRES)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    Vertex projected_point = projected_points[i];
+
+                    if (i == 0)
+                    {
+                        path.moveTo(projected_point.x, projected_point.y);
+                    } else {
+                        path.lineTo(projected_point.x, projected_point.y);
+                    }
+                }
+
+                path.closePath();
                 g2.draw(path);
+            }
 
-
+            // TODO : Add clipping
 
             // Rasterisation
             if (Renderer.DRAW_FACES)
@@ -152,17 +150,9 @@ public class Object3D
             g2.drawImage(img, 0, 0, null);
     }
 
-    private static Vertex getNormal(Vertex[] rotated_points) {
-        Vertex line1 = new Vertex(
-                rotated_points[1].x - rotated_points[0].x,
-                rotated_points[1].y - rotated_points[0].y,
-                rotated_points[1].z - rotated_points[0].z
-                );
-        Vertex line2 = new Vertex(
-                rotated_points[2].x - rotated_points[0].x,
-                rotated_points[2].y - rotated_points[0].y,
-                rotated_points[2].z - rotated_points[0].z
-                );
+    private static Vertex getNormal(Vertex[] points) {
+        Vertex line1 = points[1].subtract(points[0]);
+        Vertex line2 = points[2].subtract(points[0]);
 
         return line1.cross(line2);
     }
