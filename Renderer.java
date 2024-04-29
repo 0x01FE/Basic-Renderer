@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
@@ -17,17 +19,18 @@ public class Renderer {
     static final int TARGET_FPS = 60;
     // Overrides Target FPS
     static final boolean FPS_TEST = false;
-    static final boolean DRAW_FACES = false;
+    static final boolean DRAW_FACES = true;
+    static final boolean DRAW_WIRES = false;
 
 
-    static final boolean RENDER_GIF = true;
+    static final boolean RENDER_GIF = false;
     static final String RENDER_FILE = "render.gif";
     // Time between frames in GIF, 100 units to 1 second
     // e.x. DELAY = 5; means a frame every 1000/100*5 = 50 ms
     static final int DELAY = 5;
     //Size (squared) that the GIF should be cropped to
     //  Center of square is at center of screen
-    static final int GIF_SIZE = 250;
+    static final int GIF_SIZE = 400;
     //the number of frames to capture
     static final int FRAMES_TO_CAPTURE = 500;
 
@@ -44,7 +47,8 @@ public class Renderer {
 
         Point mouse = new Point(0, 0);
         ArrayList<Object3D> world_objects = new ArrayList<Object3D>();
-        Vertex Camera = new Vertex(0, 0, 0);
+        Camera camera = new Camera();
+        camera.position = new Vertex(0, 0, 0);
         Vertex light_direction = new Vertex(0, 0, -1);
 
         // X, Y, Z Axis Lines
@@ -75,22 +79,10 @@ public class Renderer {
             world_objects.add(y_line);
         }
 
-        // OTHER OBJECTS
-//        Cube c = new Cube(3, Color.WHITE, new Vertex(0, 0, 0), true);
-//        Cube c = new Cube();
-//        c.loadFromOBJ("objs/cube.obj");
-//
-//        c.setFaceColor('S', Color.RED);
-//        c.setFaceColor('E', Color.CYAN);
-//        c.setFaceColor('N', Color.GREEN);
-//        c.setFaceColor('W', Color.ORANGE);
-//        c.setFaceColor('B', Color.YELLOW);
-//        c.setFaceColor('T', Color.BLUE);
+
         Object3D c = new Object3D();
-
-        c.loadFromOBJ("objs/tetrahedron.obj");
-        c.randomRGB();
-
+        c.loadFromOBJ("objs/teapot.obj");
+//        c.randomRGB();
 
         world_objects.add(c);
 
@@ -133,10 +125,18 @@ public class Renderer {
                         {0, 0, 0, 1}
                 });
 
+                Matrix4 world_matrix;
+                world_matrix = z_r_transform.multiplyMatrix(x_r_transform);
+//                world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 0));
+
+                camera.direction = new Vertex(0, 0, 1);
+                Vertex up = new Vertex(0, 1, 0);
+                camera.make_matrix(up);
+
                 // Render Stored 3D Objects
                 for (Object3D object : world_objects)
                 {
-                    object.draw(g2, x_r_transform, z_r_transform, map_projection, Camera, light_direction);
+                    object.draw(g2, world_matrix, map_projection, camera, light_direction);
                 }
             }
         };
@@ -162,6 +162,42 @@ public class Renderer {
             }
         });
 
+        renderingPanel.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch(e.getKeyCode())
+                {
+                    case KeyEvent.VK_W:
+                        camera.position.z += 0.1;
+                        break;
+                    case KeyEvent.VK_S:
+                        camera.position.z -= 0.1;
+                        break;
+                    case KeyEvent.VK_D:
+                        camera.position.x += 0.1;
+                        break;
+                    case KeyEvent.VK_A:
+                        camera.position.x -= 0.1;
+                        break;
+                    case KeyEvent.VK_Q:
+                        camera.position.y += 0.1;
+                        break;
+                    case KeyEvent.VK_E:
+                        camera.position.y -= 0.1;
+                        break;
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {}
+        });
+        renderingPanel.setFocusable(true);
+        renderingPanel.requestFocusInWindow();
+
         pane.add(renderingPanel, BorderLayout.CENTER);
 
         frame.setSize(WIDTH, HEIGHT);
@@ -169,11 +205,11 @@ public class Renderer {
         frame.setVisible(true);
 
         // Rotate mode needs 60~ fps
-        if (ROTATE_MODE) {
-            long sleep_time = (long)Math.floor(1000.0 / TARGET_FPS);
-            if (FPS_TEST)
-                sleep_time = 0;
 
+        long sleep_time = (long)Math.floor(1000.0 / TARGET_FPS);
+        if (FPS_TEST)
+            sleep_time = 0;
+        if (ROTATE_MODE) {
             int frames = 0;
             long startTime = System.currentTimeMillis();
             long endTime = 0;
@@ -207,7 +243,7 @@ public class Renderer {
                 }
             }
         } else if (RENDER_GIF) {
-            long sleep_time = 1000/100*DELAY;
+            sleep_time = 1000/100*DELAY;
 
             long startTime = System.currentTimeMillis();
             long endTime = 0;
@@ -224,8 +260,8 @@ public class Renderer {
             }
             
             while (true) {
-                mouse.x = (System.currentTimeMillis() / 100.0) * 4;
-                mouse.y = (System.currentTimeMillis() / 100.00) * 4;
+//                mouse.x = (System.currentTimeMillis() / 100.0) * 2.5;
+//                mouse.y = (System.currentTimeMillis() / 100.00) * 3;
                 
                 long frameRenderStart = System.currentTimeMillis();
 
@@ -275,6 +311,17 @@ public class Renderer {
                 try {
                     long currentTime = System.currentTimeMillis();
                     Thread.sleep(Math.max(0, sleep_time - (currentTime - frameRenderStart)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        }
+        else {
+            while (true) {
+                try {
+                        Thread.sleep(sleep_time);
+                        renderingPanel.repaint();
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.exit(1);

@@ -17,6 +17,13 @@ public class Vertex {
         this.z = Double.parseDouble(z);
     }
 
+    Vertex()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+    }
+
     public void print()
     {
         System.out.println("X: " + this.x + " Y: " + this.y + " Z: " + this.z);
@@ -38,9 +45,48 @@ public class Vertex {
 
     public void normalise()
     {
-        double length = Math.sqrt((this.x * this.x) + (this.y * this.y) + (this.z * this.z));
+        double length = this.length();
         this.x = this.x / length;
         this.y = this.y / length;
         this.z = this.z / length;
+    }
+
+    public double length()
+    {
+        return Math.sqrt(this.dot(this));
+    }
+
+    public Vertex add(Vertex other)
+    {
+        return new Vertex(
+                this.x + other.x,
+                this.y + other.y,
+                this.z + other.z
+        );
+    }
+
+    public Vertex subtract(Vertex other)
+    {
+        return new Vertex(
+                this.x - other.x,
+                this.y - other.y,
+                this.z - other.z
+        );
+    }
+
+    public void divide(double c)
+    {
+        this.x /= c;
+        this.y /= c;
+        this.z /= c;
+    }
+
+    public Vertex multiply(double c)
+    {
+        return new Vertex(
+                this.x * c,
+                this.y * c,
+                this.z * c
+        );
     }
 }

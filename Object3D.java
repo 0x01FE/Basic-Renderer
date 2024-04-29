@@ -22,7 +22,7 @@ public class Object3D
         this.triangles = null;
     }
 
-    public void draw(Graphics2D g2, Matrix4 x_r_transform, Matrix4 z_r_transform, Matrix4 map_projection, Vertex Camera, Vertex light_direction)
+    public void draw(Graphics2D g2, Matrix4 world_matrix, Matrix4 map_projection, Camera camera, Vertex light_direction)
     {
         BufferedImage img = new BufferedImage(Renderer.WIDTH, Renderer.HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
@@ -35,36 +35,46 @@ public class Object3D
             Path2D path = new Path2D.Double();
             g2.setColor(t.color);
 
+            Vertex[] transformed_points = new Vertex[3];
+            Vertex[] view_points = new Vertex[3];
             Vertex[] projected_points = new Vertex[3];
-            Vertex[] rotated_points = new Vertex[3];
 
-            // Rotate Points
-            for (int i = 0; i < t.points.length; i++)
-            {
-                rotated_points[i] = z_r_transform.multiplyPoint(x_r_transform.multiplyPoint(t.points[i]));
+//             Rotate Points
+//            for (int i = 0; i < t.points.length; i++)
+//            {
+//                transformed_points[i] = z_r_transform.multiplyPoint(x_r_transform.multiplyPoint(t.points[i]));
+//
+//                // Screen Offset
+//                transformed_points[i].z += 4;
+//            }
 
-                // Screen Offset
-                rotated_points[i].z += 8;
+            for (int i = 0; i < 3; i ++) {
+                transformed_points[i] = world_matrix.multiplyPoint(t.points[i]);
+                transformed_points[i].z += 4;
             }
 
             // Calculate Normals and stuff
-            Vertex normal = getNormal(rotated_points);
+            Vertex normal = getNormal(transformed_points);
 
             // Normalise normal vector?
-            double normal_length = Math.sqrt((normal.x * normal.x) + (normal.y * normal.y) + (normal.z * normal.z));
-            normal.x /= normal_length;
-            normal.y /= normal_length;
-            normal.z /= normal_length;
+            normal.normalise();
 
-            // Back Face Culling should go here (zbuffer won't be needed i think when it works)
-            if (normal.z > 0)
+            // Back Face Culling
+            Vertex camera_ray = transformed_points[0].subtract(camera.position);
+
+            if (normal.dot(camera_ray) > 0)
                 continue;
 
-            // Project Points
+            // Convert from World Space --> View Space (camera)
+            for (int i = 0; i < 3; i++)
+                view_points[i] = camera.matrix.multiplyPoint(transformed_points[i]);
+
+
+            // Project Points from 3D --> 2D
             for (int i = 0; i < t.points.length; i++)
             {
-                // Translate / Project
-                Vertex projected_point = map_projection.multiplyPoint(rotated_points[i]);
+                // Project
+                Vertex projected_point = map_projection.multiplyPoint(view_points[i]);
 
                 // Scale Point
                 projected_point.x += 1;
@@ -87,7 +97,10 @@ public class Object3D
 
             // Draw Triangle Lines
             path.closePath();
-            g2.draw(path);
+            if (Renderer.DRAW_WIRES)
+                g2.draw(path);
+
+
 
             // Rasterisation
             if (Renderer.DRAW_FACES)
