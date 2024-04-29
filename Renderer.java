@@ -22,8 +22,10 @@ public class Renderer {
     static final boolean DRAW_FACES = false;
     static final boolean DRAW_WIRES = true;
 
+    // Should ALMOST ALWAYS BE TRUE
+    static final boolean BACK_FACE_CULLING = true;
 
-    static final boolean RENDER_GIF = false;
+    static final boolean RENDER_GIF = true;
     static final String RENDER_FILE = "render.gif";
     // Time between frames in GIF, 100 units to 1 second
     // e.x. DELAY = 5; means a frame every 1000/100*5 = 50 ms

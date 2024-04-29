@@ -62,7 +62,7 @@ public class Object3D
             // Back Face Culling
             Vertex camera_ray = transformed_points[0].subtract(camera.position);
 
-            if (normal.dot(camera_ray) > 0)
+            if (normal.dot(camera_ray) > 0 && Renderer.BACK_FACE_CULLING)
                 continue;
 
             // Convert from World Space --> View Space (camera)
