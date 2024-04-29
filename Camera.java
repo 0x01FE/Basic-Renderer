@@ -3,11 +3,22 @@ public class Camera {
     Vertex position;
     Vertex direction;
     Matrix4 matrix;
+    boolean go_forward, go_backwards, go_right, go_left, go_up, go_down;
+    double move_speed;
 
     Camera()
     {
         this.position = new Vertex();
         this.direction = new Vertex();
+
+        this.go_forward = false;
+        this.go_backwards = false;
+        this.go_right = false;
+        this.go_left = false;
+        this.go_up = false;
+        this.go_down = false;
+
+        this.move_speed = 0.1;
     }
 
     public void make_matrix(Vertex up)
@@ -55,6 +66,24 @@ public class Camera {
                     1
                 }
         });
+    }
+
+    public void move()
+    {
+        if (this.go_forward)
+            this.position.z += this.move_speed;
+        if (this.go_backwards)
+            this.position.z -= this.move_speed;
+
+        if (this.go_right)
+            this.position.x += this.move_speed;
+        if (this.go_left)
+            this.position.x -= this.move_speed;
+
+        if (this.go_up)
+            this.position.y -= this.move_speed;
+        if (this.go_down)
+            this.position.y += this.move_speed;
     }
 
 }

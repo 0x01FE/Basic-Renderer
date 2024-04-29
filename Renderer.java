@@ -15,12 +15,12 @@ public class Renderer {
     static final int FOV = 90;
     static final boolean SHOW_AXIS_LINES = false;
     static final Color BACKGROUND_COLOR = Color.BLACK;
-    static final boolean ROTATE_MODE = false;
+    static final boolean ROTATE_MODE = true;
     static final int TARGET_FPS = 60;
     // Overrides Target FPS
     static final boolean FPS_TEST = false;
-    static final boolean DRAW_FACES = true;
-    static final boolean DRAW_WIRES = false;
+    static final boolean DRAW_FACES = false;
+    static final boolean DRAW_WIRES = true;
 
 
     static final boolean RENDER_GIF = false;
@@ -81,7 +81,7 @@ public class Renderer {
 
 
         Object3D c = new Object3D();
-        c.loadFromOBJ("objs/teapot.obj");
+        c.loadFromOBJ("objs/sphere.obj");
 //        c.randomRGB();
 
         world_objects.add(c);
@@ -165,36 +165,33 @@ public class Renderer {
 
         renderingPanel.addKeyListener(new KeyListener() {
             @Override
-            public void keyTyped(KeyEvent e) {
-            }
+            public void keyTyped(KeyEvent e) {}
 
             @Override
-            public void keyPressed(KeyEvent e) {
-                switch(e.getKeyCode())
-                {
-                    case KeyEvent.VK_W:
-                        camera.position.z += 0.1;
-                        break;
-                    case KeyEvent.VK_S:
-                        camera.position.z -= 0.1;
-                        break;
-                    case KeyEvent.VK_D:
-                        camera.position.x += 0.1;
-                        break;
-                    case KeyEvent.VK_A:
-                        camera.position.x -= 0.1;
-                        break;
-                    case KeyEvent.VK_Q:
-                        camera.position.y += 0.1;
-                        break;
-                    case KeyEvent.VK_E:
-                        camera.position.y -= 0.1;
-                        break;
+            public void keyPressed(KeyEvent e)
+            {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_W -> camera.go_forward = true;
+                    case KeyEvent.VK_S -> camera.go_backwards = true;
+                    case KeyEvent.VK_D -> camera.go_right = true;
+                    case KeyEvent.VK_A -> camera.go_left = true;
+                    case KeyEvent.VK_SPACE -> camera.go_up = true;
+                    case KeyEvent.VK_CONTROL -> camera.go_down = true;
                 }
             }
 
             @Override
-            public void keyReleased(KeyEvent e) {}
+            public void keyReleased(KeyEvent e)
+            {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_W -> camera.go_forward = false;
+                    case KeyEvent.VK_S -> camera.go_backwards = false;
+                    case KeyEvent.VK_D -> camera.go_right = false;
+                    case KeyEvent.VK_A -> camera.go_left = false;
+                    case KeyEvent.VK_SPACE -> camera.go_up = false;
+                    case KeyEvent.VK_CONTROL -> camera.go_down = false;
+                }
+            }
         });
         renderingPanel.setFocusable(true);
         renderingPanel.requestFocusInWindow();
@@ -208,71 +205,55 @@ public class Renderer {
         // Rotate mode needs 60~ fps
 
 
-        // TODO : Redo all options for starting the program, make things like RENDER_GIF and Rotate mode seperate from FPS stuff
-        // TODO : Add dynamic sleep times so the TARGET_FPS can actually be hit
         long sleep_time = (long)Math.floor(1000.0 / TARGET_FPS);
         if (FPS_TEST)
             sleep_time = 0;
-        if (ROTATE_MODE) {
-            int frames = 0;
-            long startTime = System.currentTimeMillis();
-            long endTime = 0;
 
-            
-            while (true) {
-                renderingPanel.repaint();
-                frames++;
+        int frames = 0;
 
-                endTime = System.currentTimeMillis();
+        long currentTime;
 
+        long frameStartTime = System.currentTimeMillis();
+        long frameEndTime = 0;
+        double frameDeltaTime = 0;
+        double FPS = 0;
 
-                double deltaTime = (double) (endTime - startTime);
-                if (deltaTime >= 1000)
-                {
-                    double FPS = frames / (deltaTime/1000);
-                    System.out.println("FPS: " + FPS);
+        long moveStartTime = System.currentTimeMillis();
+        long moveEndTime = 0;
+        double moveDeltaTime = 0;
 
-                    frames = 0;
-                    startTime = System.currentTimeMillis();
-                }
+        Giffer giffer;
+        try {
+            giffer = new Giffer(RENDER_FILE, DELAY, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        long frameRenderStart;
+        int frames_captured = 0;
 
-                mouse.x = (System.currentTimeMillis() / 100.0) * 4;
-                mouse.y = (System.currentTimeMillis() / 100.00) * 4;
+        while (true)
+        {
+            // Draw Frame
+            renderingPanel.repaint();
+            frames++;
 
-                try {
-                    Thread.sleep(sleep_time);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.exit(1);
-                }
+            currentTime = System.currentTimeMillis();
+
+            frameEndTime = currentTime;
+            moveEndTime = currentTime;
+
+            // If rotate mode, rotate
+            if (ROTATE_MODE)
+            {
+                mouse.x = (currentTime / 100.0) * 4;
+                mouse.y = (currentTime / 100.00) * 4;
             }
-        } else if (RENDER_GIF) {
-            sleep_time = 1000/100*DELAY;
 
-            long startTime = System.currentTimeMillis();
-            long endTime = 0;
-
-            int frames_captured = 0;
-
-            //BufferedImage[] captured_frames = new BufferedImage[frames_to_capture];
-            Giffer giffer;
-            try {
-                giffer = new Giffer(RENDER_FILE, DELAY, true);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
-            }
-            
-            while (true) {
-//                mouse.x = (System.currentTimeMillis() / 100.0) * 2.5;
-//                mouse.y = (System.currentTimeMillis() / 100.00) * 3;
-                
-                long frameRenderStart = System.currentTimeMillis();
-
-                renderingPanel.repaint();
-
-                endTime = System.currentTimeMillis();
-
+            // Capture frame to render GIF
+            if (RENDER_GIF)
+            {
+                frameRenderStart = System.currentTimeMillis();
                 BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
                 Graphics2D g = bi.createGraphics();
                 renderingPanel.print(g);
@@ -290,7 +271,7 @@ public class Renderer {
                     e.printStackTrace();
                 }
 
-                frames_captured++;              
+                frames_captured++;
 
                 if (frames_captured == FRAMES_TO_CAPTURE) {
                     System.out.println("---------------------------------Started drawing gif!");
@@ -304,32 +285,52 @@ public class Renderer {
                     System.exit(1);
                 }
 
-                double deltaTime = (double) (endTime - startTime);
-                if (deltaTime >= 1000)
-                {
-                    System.out.println("Captured frames: " + Integer.toString(frames_captured));
-
-                    startTime = System.currentTimeMillis();
-                }
-
                 try {
-                    long currentTime = System.currentTimeMillis();
+                    currentTime = System.currentTimeMillis();
                     Thread.sleep(Math.max(0, sleep_time - (currentTime - frameRenderStart)));
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.exit(1);
                 }
             }
-        }
-        else {
-            while (true) {
-                try {
-                        Thread.sleep(sleep_time);
-                        renderingPanel.repaint();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.exit(1);
+
+            // Calculate FPS
+            frameDeltaTime = (double) (frameEndTime - frameStartTime);
+
+            if (frameDeltaTime >= 1000)
+            {
+                FPS = frames / (frameDeltaTime/1000);
+                System.out.println("FPS: " + FPS);
+                if (RENDER_GIF)
+                    System.out.println("Captured frames: " + Integer.toString(frames_captured));
+
+                frames = 0;
+                frameStartTime = System.currentTimeMillis();
+            }
+
+            // Movement shouldn't be tied to FPS
+            moveDeltaTime = (double) (moveEndTime - moveStartTime);
+
+            if (moveDeltaTime >= 25)
+            {
+                camera.move();
+                moveStartTime = System.currentTimeMillis();
+            }
+
+            // Calculate sleep time to ensure program is meeting target FPS
+            if (FPS != 0) {
+                if (FPS < TARGET_FPS * 0.8 && FPS > TARGET_FPS * 0.4) {
+                    sleep_time = (long) ((sleep_time * TARGET_FPS) / FPS);
+                } else if (FPS < TARGET_FPS * 0.4) {
+                    sleep_time = 0;
                 }
+            }
+
+            try {
+                Thread.sleep(sleep_time);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);
             }
         }
     }
