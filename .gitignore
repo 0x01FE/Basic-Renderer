@@ -5,3 +5,4 @@ out/
 *.class
 *.iml
 *.gif
+!.attachments/*.gif

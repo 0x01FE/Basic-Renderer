@@ -71,5 +71,33 @@ public class Matrix4 {
         return m;
     }
 
+    public static Matrix4 makeZRotation(double theta)
+    {
+        return new Matrix4(new double[][]{
+                {Math.cos(theta), Math.sin(theta), 0, 0},
+                {-Math.sin(theta), Math.cos(theta), 0 , 0},
+                {0, 0, 1, 0},
+                {0, 0, 0, 1}
+        });
+    }
 
+    public static Matrix4 makeXRotation(double theta)
+    {
+        return new Matrix4(new double[][]{
+                {1, 0, 0, 0},
+                {0, Math.cos(theta), Math.sin(theta), 0},
+                {0, -Math.sin(theta), Math.cos(theta), 0},
+                {0, 0, 0, 1}
+        });
+    }
+
+    public static Matrix4 makeYRotation(double theta)
+    {
+        return new Matrix4(new double[][]{
+                {Math.cos(theta), 0, Math.sin(theta), 0},
+                {0, 1, 0, 0},
+                {-Math.sin(theta), 0, Math.cos(theta), 0},
+                {0, 0, 0, 1}
+        });
+    }
 }

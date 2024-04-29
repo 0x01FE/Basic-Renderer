@@ -74,11 +74,13 @@ public class Vertex {
         );
     }
 
-    public void divide(double c)
+    public Vertex divide(double c)
     {
-        this.x /= c;
-        this.y /= c;
-        this.z /= c;
+        return new Vertex(
+                this.x / c,
+                this.y / c,
+                this.z / c
+        );
     }
 
     public Vertex multiply(double c)
