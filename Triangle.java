@@ -32,6 +32,14 @@ public class Triangle {
         int green = (int) Math.pow(greenLinear, 1 / 2.2);
         int blue = (int) Math.pow(blueLinear, 1 / 2.2);
 
+        // Clipping the color values
+        if (red > 255)
+            red = 255;
+        if (green > 255)
+            green = 255;
+        if (blue > 255)
+            blue = 255;
+
         return new Color(red, green, blue);
     }
 

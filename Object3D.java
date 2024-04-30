@@ -103,11 +103,12 @@ public class Object3D
                         Triangle test = trianglesToDraw.remove();
                         newTrianglesCount--;
 
+                        // TODO : Figure out why the height and width max clipping isn't working
                         switch (plane) {
                             case 0 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, 0, 0), new Vertex(0, 1, 0), test);
-                            case 1 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, renderingPanel.getHeight(), 0), new Vertex(0, -1, 0), test);
+                            case 1 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, renderingPanel.getHeight() - 1, 0), new Vertex(0, -1, 0), test);
                             case 2 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, 0, 0), new Vertex(1, 0, 0), test);
-                            default -> newTriangles = Triangle.clipAgainstPlane(new Vertex(renderingPanel.getWidth(), 0, 0), new Vertex(-1, 0, 0), test);
+                            default -> newTriangles = Triangle.clipAgainstPlane(new Vertex(renderingPanel.getWidth() - 1, 0, 0), new Vertex(-1, 0, 0), test);
                         }
 
 

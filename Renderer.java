@@ -50,7 +50,7 @@ public class Renderer {
         ArrayList<Object3D> world_objects = new ArrayList<>();
         Camera camera = new Camera();
         camera.position = new Vertex(0, 0, 0);
-        Vertex light_direction = new Vertex(0, 0, -1);
+        Vertex light_direction = new Vertex(0, 1, -1);
 
         // X, Y, Z Axis Lines
         if (SHOW_AXIS_LINES)
@@ -158,8 +158,15 @@ public class Renderer {
                     int mouse_x = e.getX() - (view_width / 2);
                     int mouse_y = e.getY() - (view_height / 2);
 
+                    // TODO : Fix turning once you go past a certain z point and if you turn too far around
                     camera_rotation.y += (mouse_x / half_width) * LOOK_SPEED;
                     camera_rotation.x += (mouse_y / half_height) * LOOK_SPEED;
+
+                    if (camera_rotation.y > 360)
+                        camera_rotation.y = 0;
+
+                    if (camera_rotation.x > 360)
+                        camera_rotation.x = 0;
 
                     // Code to move mouse to 0,0
                     try {
@@ -237,7 +244,10 @@ public class Renderer {
                 new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new java.awt.Point(0, 0),
                 "null"));
 
-        // Rotate mode needs 60~ fps
+        int polyCount = 0;
+        for (Object3D o : world_objects)
+            polyCount += o.triangles.length;
+        System.out.println("Polygon Count: " + polyCount);
 
 
         long sleep_time = (long)Math.floor(1000.0 / TARGET_FPS);
