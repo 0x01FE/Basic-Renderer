@@ -107,4 +107,15 @@ public class Triangle {
         p.normalise();
         return ((plane_normal.x * p.x) + (plane_normal.y * p.y) + (plane_normal.z * p.z) - plane_normal.dot(plane_point));
     }
+
+    public void print()
+    {
+        int i = 0;
+        for (Vertex p : this.points)
+        {
+            System.out.print("P" + i + " ");
+            p.print();
+            i++;
+        }
+    }
 }
