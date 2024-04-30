@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
@@ -20,16 +21,10 @@ public class Object3D
         this.triangles = null;
     }
 
-    public void draw(Graphics2D g2, Matrix4 world_matrix, Matrix4 map_projection, Camera camera, Vertex light_direction)
+    public void draw(Graphics2D g2, Matrix4 world_matrix, Matrix4 map_projection, Camera camera, Vertex light_direction, JPanel renderingPanel)
     {
-        BufferedImage img = new BufferedImage(Renderer.WIDTH, Renderer.HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
-        double[][] zBuffer = new double[img.getHeight()][img.getWidth()];
-        for (double[] row : zBuffer)
-            Arrays.fill(row, Double.MAX_VALUE);
-
-        for (Triangle t : this.triangles)
-        {
+        for (Triangle t : this.triangles) {
             Path2D path = new Path2D.Double();
             g2.setColor(t.color);
 
@@ -37,7 +32,7 @@ public class Object3D
             Vertex[] view_points = new Vertex[3];
             Vertex[] projected_points = new Vertex[3];
 
-            for (int i = 0; i < 3; i ++) {
+            for (int i = 0; i < 3; i++) {
                 transformed_points[i] = world_matrix.multiplyPoint(t.points[i]);
                 transformed_points[i].z += 4;
             }
@@ -65,21 +60,28 @@ public class Object3D
             Triangle[] clipped_triangles = Triangle.clipAgainstPlane(plane_point, plane_normal, view_triangle);
 
             // Project Points from 3D --> 2D
+            Vertex offset_view = new Vertex(1, 1, 0);
             for (Triangle clippedTriangle : clipped_triangles) {
                 for (int i = 0; i < t.points.length; i++) {
                     // Project
-                    Vertex projected_point = map_projection.multiplyPoint(clippedTriangle.points[i]);
+                    final double Z_NEAR = 0.1;
+                    final double Z_FAR = 1000;
+                    final double Q = Z_FAR / (Z_FAR - Z_NEAR);
 
-                    // X/Y are inverted
-                    projected_point.x *= -1;
-                    projected_point.y *= -1;
+                    double w = clippedTriangle.points[i].z * (-Z_NEAR * Q);
+
+                    Vertex projected_point = map_projection.multiplyPoint(clippedTriangle.points[i]);
+                    if (w != 0)
+                        projected_point = projected_point.divide(w);
+
+                    // Inverse X/Y?
+//                    projected_point.x *= -1;
 
                     // Scale Point
-                    projected_point.x += 1;
-                    projected_point.y += 1;
+                    projected_point = projected_point.add(offset_view);
 
-                    projected_point.x *= 0.5 * Renderer.WIDTH;
-                    projected_point.y *= 0.5 * Renderer.HEIGHT;
+                    projected_point.x *= 0.5 * renderingPanel.getWidth();
+                    projected_point.y *= 0.5 * renderingPanel.getHeight();
 
 
                     // Store for projected points for rasterisation
@@ -88,37 +90,34 @@ public class Object3D
 
                 // Clipping against screen edges
                 Triangle projected_triangle = new Triangle(projected_points, t.color);
-                projected_triangle.print();
+//                projected_triangle.print();
 
                 Queue<Triangle> trianglesToDraw = new LinkedList<>();
                 trianglesToDraw.add(projected_triangle);
                 int newTrianglesCount = 1;
 
-                for (int plane = 0; plane < 4; plane++)
-                {
-                    while (newTrianglesCount > 0)
-                    {
-                        Triangle[] newTriangles = new Triangle[0];
+                for (int plane = 0; plane < 4; plane++) {
+                    while (newTrianglesCount > 0) {
+                        Triangle[] newTriangles;
 
                         Triangle test = trianglesToDraw.remove();
                         newTrianglesCount--;
 
-                        switch (plane)
-                        {
+                        switch (plane) {
                             case 0 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, 0, 0), new Vertex(0, 1, 0), test);
-                            case 1 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, Renderer.HEIGHT - 1, 0), new Vertex(0, -1, 0), test);
+                            case 1 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, renderingPanel.getHeight(), 0), new Vertex(0, -1, 0), test);
                             case 2 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, 0, 0), new Vertex(1, 0, 0), test);
-                            case 3 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(Renderer.WIDTH - 1, 0, 0), new Vertex(-1, 0, 0), test);
+                            default -> newTriangles = Triangle.clipAgainstPlane(new Vertex(renderingPanel.getWidth(), 0, 0), new Vertex(-1, 0, 0), test);
                         }
 
-                        for (Triangle newTriangle : newTriangles)
-                            trianglesToDraw.add(newTriangle);
+
+                        Collections.addAll(trianglesToDraw, newTriangles);
+
                     }
                     newTrianglesCount = trianglesToDraw.size();
                 }
 
-                for (Triangle triToDraw : trianglesToDraw)
-                {
+                for (Triangle triToDraw : trianglesToDraw) {
                     // Draw Triangle Lines
                     if (Renderer.DRAW_WIRES) {
                         g2.setColor(triToDraw.color);
@@ -143,47 +142,16 @@ public class Object3D
                         Vertex v2 = triToDraw.points[1];
                         Vertex v3 = triToDraw.points[2];
 
-
-                        // Calculate Ranges
-                        int minX = (int) Math.max(0, Math.ceil(Math.min(v1.x, Math.min(v2.x, v3.x))));
-                        int maxX = (int) Math.min(img.getWidth() - 1, Math.floor(Math.max(v1.x, Math.max(v2.x, v3.x))));
-                        int minY = (int) Math.max(0, Math.ceil(Math.min(v1.y, Math.min(v2.y, v3.y))));
-                        int maxY = (int) Math.min(img.getHeight() - 1, Math.floor(Math.max(v1.y, Math.max(v2.y, v3.y))));
-
-                        double triangleArea = (v1.y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - v1.x);
-
-                        for (int y = minY; y <= maxY; y++) {
-                            for (int x = minX; x <= maxX; x++) {
-
-                                double b1 = ((y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - x)) / triangleArea;
-                                double b2 = ((y - v1.y) * (v3.x - v1.x) + (v3.y - v1.y) * (v1.x - x)) / triangleArea;
-                                double b3 = ((y - v2.y) * (v1.x - v2.x) + (v1.y - v2.y) * (v2.x - x)) / triangleArea;
-
-                                if (b1 >= 0 && b1 <= 1 && b2 >= 0 && b2 <= 1 && b3 >= 0 && b3 <= 1) {
-
-                                    double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
-
-                                    if (zBuffer[y][x] > depth) {
-                                        // Now that we know we're coloring this pixel we do light calculations
-                                        light_direction.normalise();
-                                        double shade = light_direction.dot(normal);
-
-                                        img.setRGB(x, y, t.getShade(shade).getRGB());
-                                        zBuffer[y][x] = depth;
-                                    }
-                                }
-                            }
-                        }
+                        // Why do every pixel when I have a fill method
+                        int[] xs = new int[]{(int) v1.x, (int) v2.x, (int) v3.x};
+                        int[] ys = new int[]{(int) v1.y, (int) v2.y, (int) v3.y};
+                        double shade = light_direction.dot(normal);
+                        g2.setColor(t.getShade(shade));
+                        g2.fillPolygon(xs, ys, 3);
                     }
                 }
-                }
-
-
-
-            if (Renderer.DRAW_FACES)
-                g2.drawImage(img, 0, 0, null);
             }
-
+        }
     }
 
     private static Vertex getNormal(Vertex[] points) {

@@ -20,11 +20,11 @@ public class Renderer {
     static final int TARGET_FPS = 60;
     // Overrides Target FPS
     static final boolean FPS_TEST = false;
-    static final boolean DRAW_FACES = false;
+    static final boolean DRAW_FACES = true;
     static final boolean DRAW_WIRES = true;
 
     // Should ALMOST ALWAYS BE TRUE
-    static final boolean BACK_FACE_CULLING = false;
+    static final boolean BACK_FACE_CULLING = true;
 
     static final boolean RENDER_GIF = false;
     static final String RENDER_FILE = "render.gif";
@@ -83,7 +83,7 @@ public class Renderer {
 
         // Load objects for the world
         Object3D c = new Object3D();
-        c.loadFromOBJ("objs/axis.obj");
+        c.loadFromOBJ("objs/sphere.obj");
 
         world_objects.add(c);
 
@@ -99,7 +99,6 @@ public class Renderer {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setColor(BACKGROUND_COLOR);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-
 
                 // Calculate POV transform
                 Matrix4 map_projection = new Matrix4(new double[][]{
@@ -132,7 +131,7 @@ public class Renderer {
                 // Render Stored 3D Objects
                 for (Object3D object : world_objects)
                 {
-                    object.draw(g2, world_matrix, map_projection, camera, light_direction);
+                    object.draw(g2, world_matrix, map_projection, camera, light_direction, this);
                 }
             }
         };
@@ -156,7 +155,7 @@ public class Renderer {
 
                 if (camera.mouse_lock)
                 {
-                    camera_rotation.y += (mouse_x / half_width) * -1 * LOOK_SPEED;
+                    camera_rotation.y += (mouse_x / half_width) * LOOK_SPEED;
 
                     // Code to move mouse to 0,0
                     try {

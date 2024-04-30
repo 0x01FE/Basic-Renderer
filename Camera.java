@@ -81,14 +81,14 @@ public class Camera {
             this.position = this.position.subtract(this.direction.multiply(this.move_speed));
 
         if (this.go_right)
-            this.position.x += this.move_speed;
-        if (this.go_left)
             this.position.x -= this.move_speed;
+        if (this.go_left)
+            this.position.x += this.move_speed;
 
         if (this.go_up)
-            this.position.y -= this.move_speed;
-        if (this.go_down)
             this.position.y += this.move_speed;
+        if (this.go_down)
+            this.position.y -= this.move_speed;
     }
 
 }

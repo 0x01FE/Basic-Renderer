@@ -51,6 +51,16 @@ public class Vertex {
         this.z = this.z / length;
     }
 
+    public Vertex normalise2()
+    {
+        double length = this.length();
+        return new Vertex(
+                this.x / length,
+                this.y / length,
+                this.z / length
+        );
+    }
+
     public double length()
     {
         return Math.sqrt(this.dot(this));
@@ -102,5 +112,14 @@ public class Vertex {
         Vertex line_start_to_end = line_end.subtract(line_start);
         Vertex lineToInterest = line_start_to_end.multiply(t);
         return line_start.add(lineToInterest);
+    }
+
+    public boolean equals(Vertex other)
+    {
+        return (
+                this.x == other.x &&
+                this.y == other.y &&
+                this.z == other.z
+        );
     }
 }

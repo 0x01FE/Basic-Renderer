@@ -25,12 +25,12 @@ public class Matrix4 {
                 in.x * this.values[0][3] + in.y * this.values[1][3] + in.z * this.values[2][3] + this.values[3][3]
         };
 
-        if (result_matrix[3] != 0)
-        {
-            result_matrix[0] /= result_matrix[3];
-            result_matrix[1] /= result_matrix[3];
-            result_matrix[2] /= result_matrix[3];
-        }
+//        if (result_matrix[3] != 0)
+//        {
+//            result_matrix[0] /= result_matrix[3];
+//            result_matrix[1] /= result_matrix[3];
+//            result_matrix[2] /= result_matrix[3];
+//        }
 
         return new Vertex(
                 result_matrix[0],

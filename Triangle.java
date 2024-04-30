@@ -37,7 +37,7 @@ public class Triangle {
 
     public static Triangle[] clipAgainstPlane(Vertex plane_point, Vertex plane_normal, Triangle view_triangle)
     {
-        plane_normal.normalise();
+        plane_normal = plane_normal.normalise2();
 
         Vertex[] inside_points = new Vertex[3];
         int insidePointCount = 0;
@@ -47,7 +47,8 @@ public class Triangle {
         // Check distances
         for (int i = 0; i < 3; i++)
         {
-            double dist = dist(view_triangle.points[i], plane_normal, plane_point);
+            Vertex p_copy = view_triangle.points[i];
+            double dist = dist(p_copy, plane_normal, plane_point);
 
             if (dist >= 0)
             {
@@ -58,6 +59,8 @@ public class Triangle {
                 outside_points[outsidePointCount++] = view_triangle.points[i];
             }
         }
+
+//        System.out.println("inside points " + insidePointCount);
 
         // Triangle is completely outside of plane, don't draw it
         if (insidePointCount == 0)
@@ -102,9 +105,9 @@ public class Triangle {
     }
 
     // Return the shortest signed distance from point to plane
-    public static double dist(Vertex p, Vertex plane_normal, Vertex plane_point)
+    public static double dist(Vertex p_in, Vertex plane_normal, Vertex plane_point)
     {
-        p.normalise();
+        Vertex p = p_in.normalise2();
         return ((plane_normal.x * p.x) + (plane_normal.y * p.y) + (plane_normal.z * p.z) - plane_normal.dot(plane_point));
     }
 
