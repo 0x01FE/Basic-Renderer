@@ -144,20 +144,20 @@ public class Renderer {
             @Override
             public void mouseMoved(MouseEvent e)
             {
-                double window_width = frame.getWidth();
-                double window_height = frame.getHeight();
-
-                double half_width = window_width / 2.0;
-                double half_height = window_height / 2.0;
-
-                int view_height = renderingPanel.getHeight();
-                int view_width = renderingPanel.getWidth();
-;
-                int mouse_x = e.getX() - (view_width / 2);
-                int mouse_y = e.getY() - (view_height / 2);
-
                 if (camera.mouse_lock)
                 {
+                    double window_width = frame.getWidth();
+                    double window_height = frame.getHeight();
+
+                    double half_width = window_width / 2.0;
+                    double half_height = window_height / 2.0;
+
+                    int view_height = renderingPanel.getHeight();
+                    int view_width = renderingPanel.getWidth();
+                    ;
+                    int mouse_x = e.getX() - (view_width / 2);
+                    int mouse_y = e.getY() - (view_height / 2);
+
                     camera_rotation.y += (mouse_x / half_width) * LOOK_SPEED;
                     camera_rotation.x += (mouse_y / half_height) * LOOK_SPEED;
 
