@@ -135,6 +135,7 @@ public class Object3D
                         g2.draw(path);
                     }
 
+                    // TODO : Add back Z-Buffer
                     // Rasterisation
                     if (Renderer.DRAW_FACES) {
 

@@ -120,9 +120,11 @@ public class Renderer {
                 world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 4));
 
                 double camera_rotation_y_radians = Math.toRadians(camera_rotation.y);
+                double camera_rotation_x_radians = Math.toRadians(camera_rotation.x);
                 camera.direction = new Vertex(0, 0, 1);
                 Matrix4 y_camera_rotation = Matrix4.makeYRotation(camera_rotation_y_radians);
-                camera.direction = y_camera_rotation.multiplyPoint(camera.direction);
+                Matrix4 camera_rotation = y_camera_rotation.multiplyMatrix(Matrix4.makeXRotation(camera_rotation_x_radians));
+                camera.direction = camera_rotation.multiplyPoint(camera.direction);
 
                 camera.make_matrix();
 
@@ -148,18 +150,26 @@ public class Renderer {
                 double half_width = window_width / 2.0;
                 double half_height = window_height / 2.0;
 
-                int mouse_x = e.getX() - (renderingPanel.getWidth() / 2);
-                int mouse_y = e.getY() - (renderingPanel.getHeight() / 2);
+                int view_height = renderingPanel.getHeight();
+                int view_width = renderingPanel.getWidth();
+;
+                int mouse_x = e.getX() - (view_width / 2);
+                int mouse_y = e.getY() - (view_height / 2);
 
                 if (camera.mouse_lock)
                 {
                     camera_rotation.y += (mouse_x / half_width) * LOOK_SPEED;
+                    camera_rotation.x += (mouse_y / half_height) * LOOK_SPEED;
 
                     // Code to move mouse to 0,0
                     try {
                         Robot tim = new Robot();
 
-                        tim.mouseMove((int)half_width, (int)half_height);
+                        // Our mouse coords are in component view space so we need to convert them to screen space for Tim
+                        java.awt.Point window_point = new java.awt.Point(view_width / 2, view_height / 2);
+                        SwingUtilities.convertPointToScreen(window_point, renderingPanel);
+
+                        tim.mouseMove(window_point.x, window_point.y);
                     } catch (AWTException exception)
                     {
                         exception.printStackTrace();
