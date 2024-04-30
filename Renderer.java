@@ -83,7 +83,7 @@ public class Renderer {
 
         // Load objects for the world
         Object3D c = new Object3D();
-        c.loadFromOBJ("objs/sphere.obj");
+        c.loadFromOBJ("objs/teapot.obj");
 
         world_objects.add(c);
 
@@ -119,14 +119,12 @@ public class Renderer {
                 world_matrix = z_rotation.multiplyMatrix(x_rotation);
                 world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 4));
 
-                Vertex up = new Vertex(0, 1, 0);
-
                 double camera_rotation_y_radians = Math.toRadians(camera_rotation.y);
                 camera.direction = new Vertex(0, 0, 1);
                 Matrix4 y_camera_rotation = Matrix4.makeYRotation(camera_rotation_y_radians);
                 camera.direction = y_camera_rotation.multiplyPoint(camera.direction);
 
-                camera.make_matrix(up);
+                camera.make_matrix();
 
                 // Render Stored 3D Objects
                 for (Object3D object : world_objects)

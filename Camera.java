@@ -2,6 +2,8 @@ public class Camera {
 
     Vertex position;
     Vertex direction;
+    Vertex up;
+    Vertex right;
     Matrix4 matrix;
     boolean go_forward, go_backwards, go_right, go_left, go_up, go_down, mouse_lock;
     double move_speed;
@@ -13,6 +15,9 @@ public class Camera {
 
         // We start looking forwards
         this.direction = new Vertex(0, 0, 1);
+
+        // We start with up being, well, up
+        this.up = new Vertex(0, 1, 0);
 
         this.go_forward = false;
         this.go_backwards = false;
@@ -26,12 +31,12 @@ public class Camera {
         this.move_speed = 0.1;
     }
 
-    public void make_matrix(Vertex up)
+    public void make_matrix()
     {
-        this.matrix = quick_inverse(this.point_at(up));
+        this.matrix = quick_inverse(this.point_at());
     }
 
-    public Matrix4 point_at(Vertex up)
+    public Matrix4 point_at()
     {
         Vertex target = this.position.add(this.direction);
 
@@ -40,12 +45,13 @@ public class Camera {
         new_forward.normalise();
 
         // Calculate new up
-        Vertex temp_v = new_forward.multiply(up.dot(new_forward));
-        Vertex new_up = up.subtract(temp_v);
+        Vertex temp_v = new_forward.multiply(this.up.dot(new_forward));
+        Vertex new_up = this.up.subtract(temp_v);
         new_up.normalise();
 
         // Calculate new right
         Vertex new_right = new_up.cross(new_forward);
+        this.right = new_right;
 
         // Construct matrix for translations
         return new Matrix4(new double[][]{
@@ -81,9 +87,9 @@ public class Camera {
             this.position = this.position.subtract(this.direction.multiply(this.move_speed));
 
         if (this.go_right)
-            this.position.x -= this.move_speed;
+            this.position = this.position.subtract(this.right.multiply(this.move_speed));
         if (this.go_left)
-            this.position.x += this.move_speed;
+            this.position = this.position.add(this.right.multiply(this.move_speed));
 
         if (this.go_up)
             this.position.y += this.move_speed;
