@@ -76,9 +76,9 @@ public class Camera {
     public void move()
     {
         if (this.go_forward)
-            this.position.z += this.move_speed;
+            this.position = this.position.add(this.direction.multiply(this.move_speed));
         if (this.go_backwards)
-            this.position.z -= this.move_speed;
+            this.position = this.position.subtract(this.direction.multiply(this.move_speed));
 
         if (this.go_right)
             this.position.x += this.move_speed;

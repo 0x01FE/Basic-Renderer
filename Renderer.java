@@ -13,10 +13,10 @@ public class Renderer {
     static final int HEIGHT = 1080;
     static final int WIDTH = 1920;
     static final int FOV = 90;
-    static final double LOOK_SPEED = 0.01;
+    static final double LOOK_SPEED = 15;
     static final boolean SHOW_AXIS_LINES = false;
     static final Color BACKGROUND_COLOR = Color.BLACK;
-    static final boolean ROTATE_MODE = true;
+    static final boolean ROTATE_MODE = false;
     static final int TARGET_FPS = 60;
     // Overrides Target FPS
     static final boolean FPS_TEST = false;
@@ -24,7 +24,7 @@ public class Renderer {
     static final boolean DRAW_WIRES = true;
 
     // Should ALMOST ALWAYS BE TRUE
-    static final boolean BACK_FACE_CULLING = true;
+    static final boolean BACK_FACE_CULLING = false;
 
     static final boolean RENDER_GIF = false;
     static final String RENDER_FILE = "render.gif";
@@ -83,7 +83,7 @@ public class Renderer {
 
         // Load objects for the world
         Object3D c = new Object3D();
-        c.loadFromOBJ("objs/sphere.obj");
+        c.loadFromOBJ("objs/axis.obj");
 
         world_objects.add(c);
 
@@ -118,7 +118,7 @@ public class Renderer {
 
                 Matrix4 world_matrix;
                 world_matrix = z_rotation.multiplyMatrix(x_rotation);
-                world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 0));
+                world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 4));
 
                 Vertex up = new Vertex(0, 1, 0);
 
@@ -126,6 +126,7 @@ public class Renderer {
                 camera.direction = new Vertex(0, 0, 1);
                 Matrix4 y_camera_rotation = Matrix4.makeYRotation(camera_rotation_y_radians);
                 camera.direction = y_camera_rotation.multiplyPoint(camera.direction);
+
                 camera.make_matrix(up);
 
                 // Render Stored 3D Objects
@@ -144,17 +145,30 @@ public class Renderer {
             @Override
             public void mouseMoved(MouseEvent e)
             {
+                double window_width = frame.getWidth();
+                double window_height = frame.getHeight();
+
+                double half_width = window_width / 2.0;
+                double half_height = window_height / 2.0;
+
                 int mouse_x = e.getX() - (renderingPanel.getWidth() / 2);
                 int mouse_y = e.getY() - (renderingPanel.getHeight() / 2);
 
-//                System.out.println("Mouse X: " + mouse_x + ", Mouse Y: " + mouse_y);
-
-                camera_rotation.y = (mouse_x / (renderingPanel.getWidth() / 2.0)) * -1 * 90;
-
                 if (camera.mouse_lock)
                 {
+                    camera_rotation.y += (mouse_x / half_width) * -1 * LOOK_SPEED;
+
                     // Code to move mouse to 0,0
-                    int i;
+                    try {
+                        Robot tim = new Robot();
+
+                        tim.mouseMove((int)half_width, (int)half_height);
+                    } catch (AWTException exception)
+                    {
+                        exception.printStackTrace();
+                        System.exit(1);
+                    }
+
                 }
             }
         });
@@ -174,9 +188,22 @@ public class Renderer {
                     case KeyEvent.VK_A -> camera.go_left = true;
                     case KeyEvent.VK_SPACE -> camera.go_up = true;
                     case KeyEvent.VK_CONTROL -> camera.go_down = true;
-                    case KeyEvent.VK_ESCAPE -> camera.mouse_lock = !camera.mouse_lock;
+                    case KeyEvent.VK_ESCAPE -> {
+                            camera.mouse_lock = !camera.mouse_lock;
+                            if (camera.mouse_lock)
+                            {
+                                frame.setCursor(frame.getToolkit().createCustomCursor(
+                                        new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new java.awt.Point(0, 0),
+                                        "null"));
+                            }
+                            else
+                            {
+                                frame.setCursor(Cursor.getDefaultCursor());
+                            }
+                    }
                 }
             }
+
 
             @Override
             public void keyReleased(KeyEvent e)
@@ -199,6 +226,9 @@ public class Renderer {
         frame.setSize(WIDTH, HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+        frame.setCursor(frame.getToolkit().createCustomCursor(
+                new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB), new java.awt.Point(0, 0),
+                "null"));
 
         // Rotate mode needs 60~ fps
 

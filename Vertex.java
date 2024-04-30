@@ -91,4 +91,16 @@ public class Vertex {
                 this.z * c
         );
     }
+
+    public static Vertex lineIntersectPlane(Vertex plane_point, Vertex plane_normal, Vertex line_start, Vertex line_end)
+    {
+        plane_normal.normalise();
+        double plane_dot = -plane_normal.dot(plane_point);
+        double ad = line_start.dot(plane_normal);
+        double bd = line_end.dot(plane_normal);
+        double t = (-plane_dot - ad) / (bd - ad);
+        Vertex line_start_to_end = line_end.subtract(line_start);
+        Vertex lineToInterest = line_start_to_end.multiply(t);
+        return line_start.add(lineToInterest);
+    }
 }
