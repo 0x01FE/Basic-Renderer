@@ -90,7 +90,6 @@ public class Object3D
 
                 // Clipping against screen edges
                 Triangle projected_triangle = new Triangle(projected_points, t.color);
-//                projected_triangle.print();
 
                 Queue<Triangle> trianglesToDraw = new LinkedList<>();
                 trianglesToDraw.add(projected_triangle);
@@ -103,7 +102,6 @@ public class Object3D
                         Triangle test = trianglesToDraw.remove();
                         newTrianglesCount--;
 
-                        // TODO : Figure out why the height and width max clipping isn't working
                         switch (plane) {
                             case 0 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, 0, 0), new Vertex(0, 1, 0), test);
                             case 1 -> newTriangles = Triangle.clipAgainstPlane(new Vertex(0, renderingPanel.getHeight() - 1, 0), new Vertex(0, -1, 0), test);
