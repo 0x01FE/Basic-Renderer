@@ -21,7 +21,7 @@ public class Object3D
         this.triangles = null;
     }
 
-    public void draw(Graphics2D g2, Matrix4 world_matrix, Matrix4 map_projection, Camera camera, Vertex light_direction, JPanel renderingPanel)
+    public void draw(Graphics2D g2, World3D world, Matrix4 map_projection, Camera camera, Vertex light_direction, JPanel renderingPanel)
     {
 
         for (Triangle t : this.triangles) {
@@ -33,7 +33,7 @@ public class Object3D
             Vertex[] projected_points = new Vertex[3];
 
             for (int i = 0; i < 3; i++) {
-                transformed_points[i] = world_matrix.multiplyPoint(t.points[i]);
+                transformed_points[i] = world.matrix.multiplyPoint(t.points[i]);
                 transformed_points[i].z += 4;
             }
 

@@ -5,7 +5,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
 
 public class Renderer {
@@ -47,10 +46,10 @@ public class Renderer {
 
         Point world_rotation = new Point(0, 0);
         Point camera_rotation = new Point(0, 0);
-        ArrayList<Object3D> world_objects = new ArrayList<>();
         Camera camera = new Camera();
         camera.position = new Vertex(0, 0, 0);
         Vertex light_direction = new Vertex(0, 1, -1);
+        World3D world = new World3D();
 
         // X, Y, Z Axis Lines
         if (SHOW_AXIS_LINES)
@@ -61,7 +60,7 @@ public class Renderer {
             },
                     Color.BLUE);
 
-            world_objects.add(z_line);
+            world.objects.add(z_line);
 
             Line3D x_line = new Line3D(new Vertex[]{
                     new Vertex(-3, 0, 0),
@@ -69,7 +68,7 @@ public class Renderer {
             },
                     Color.RED);
 
-            world_objects.add(x_line);
+            world.objects.add(x_line);
 
             Line3D y_line = new Line3D(new Vertex[]{
                     new Vertex(0, -3, 0),
@@ -77,7 +76,7 @@ public class Renderer {
             },
                     Color.GREEN);
 
-            world_objects.add(y_line);
+            world.objects.add(y_line);
         }
 
 
@@ -85,7 +84,7 @@ public class Renderer {
         Object3D c = new Object3D();
         c.loadFromOBJ("objs/teapot.obj");
 
-        world_objects.add(c);
+        world.objects.add(c);
 
 
         // Do the Computer Graphics
@@ -119,6 +118,10 @@ public class Renderer {
                 world_matrix = z_rotation.multiplyMatrix(x_rotation);
                 world_matrix.multiplyMatrix(Matrix4.makeTranslation(0, 0, 4));
 
+                world.matrix = world_matrix;
+
+
+                // Set up camera matrix
                 double camera_rotation_y_radians = Math.toRadians(camera_rotation.y);
                 double camera_rotation_x_radians = Math.toRadians(camera_rotation.x);
                 camera.direction = new Vertex(0, 0, 1);
@@ -128,10 +131,13 @@ public class Renderer {
 
                 camera.make_matrix();
 
+                // Reset Z buffer
+                world.resetZBuffer(this);
+
                 // Render Stored 3D Objects
-                for (Object3D object : world_objects)
+                for (Object3D object : world.objects)
                 {
-                    object.draw(g2, world_matrix, map_projection, camera, light_direction, this);
+                    object.draw(g2, world, map_projection, camera, light_direction, this);
                 }
             }
         };
@@ -154,7 +160,7 @@ public class Renderer {
 
                     int view_height = renderingPanel.getHeight();
                     int view_width = renderingPanel.getWidth();
-                    ;
+
                     int mouse_x = e.getX() - (view_width / 2);
                     int mouse_y = e.getY() - (view_height / 2);
 
@@ -172,7 +178,7 @@ public class Renderer {
                     try {
                         Robot tim = new Robot();
 
-                        // Our mouse coords are in component view space so we need to convert them to screen space for Tim
+                        // Our mouse coords are in component view space, so we need to convert them to screen space for Tim
                         java.awt.Point window_point = new java.awt.Point(view_width / 2, view_height / 2);
                         SwingUtilities.convertPointToScreen(window_point, renderingPanel);
 
@@ -245,7 +251,7 @@ public class Renderer {
                 "null"));
 
         int polyCount = 0;
-        for (Object3D o : world_objects)
+        for (Object3D o : world.objects)
             polyCount += o.triangles.length;
         System.out.println("Polygon Count: " + polyCount);
 
