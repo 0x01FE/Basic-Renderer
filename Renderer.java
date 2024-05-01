@@ -83,7 +83,7 @@ public class Renderer {
 
         // Load objects for the world
         Object3D c = new Object3D();
-        c.loadFromOBJ("objs/teapot.obj");
+        c.loadFromOBJ("objs/cube.obj");
 
         world_objects.add(c);
 

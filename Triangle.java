@@ -115,8 +115,7 @@ public class Triangle {
     // Return the shortest signed distance from point to plane
     public static double dist(Vertex p_in, Vertex plane_normal, Vertex plane_point)
     {
-        Vertex p = p_in.normalise2();
-        return ((plane_normal.x * p.x) + (plane_normal.y * p.y) + (plane_normal.z * p.z) - plane_normal.dot(plane_point));
+        return ((plane_normal.x * p_in.x) + (plane_normal.y * p_in.y) + (plane_normal.z * p_in.z) - plane_normal.dot(plane_point));
     }
 
     public void print()
