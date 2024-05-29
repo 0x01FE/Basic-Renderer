@@ -15,7 +15,8 @@ public class Renderer {
     static final double LOOK_SPEED = 15;
     static final boolean SHOW_AXIS_LINES = false;
     static final Color BACKGROUND_COLOR = Color.BLACK;
-    static final boolean ROTATE_MODE = false;
+    static final boolean ROTATE_MODE = true;
+    static final boolean CAMERA_ENABLED = false;
     static final int TARGET_FPS = 60;
     // Overrides Target FPS
     static final boolean FPS_TEST = false;
@@ -48,6 +49,8 @@ public class Renderer {
         Point camera_rotation = new Point(0, 0);
         Camera camera = new Camera();
         camera.position = new Vertex(0, 0, 0);
+        if (!CAMERA_ENABLED)
+            camera.position.z = -10;
         Vertex light_direction = new Vertex(0, 1, -1);
         World3D world = new World3D();
 
@@ -82,7 +85,7 @@ public class Renderer {
 
         // Load objects for the world
         Object3D c = new Object3D();
-        c.loadFromOBJ("objs/teapot.obj");
+        c.loadFromOBJ("objs/sphere.obj");
 
         world.objects.add(c);
 
@@ -150,7 +153,7 @@ public class Renderer {
             @Override
             public void mouseMoved(MouseEvent e)
             {
-                if (camera.mouse_lock)
+                if (camera.mouse_lock && CAMERA_ENABLED)
                 {
                     double window_width = frame.getWidth();
                     double window_height = frame.getHeight();
